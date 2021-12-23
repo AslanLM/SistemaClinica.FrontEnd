@@ -71,7 +71,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="ModalAgregarDoctor" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="ModalEdicionDeDoctor" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -137,12 +137,90 @@
                             <ValidationMessage For="() => DoctorDtoModel.Telefono" />
                         </div>
                     </div>
-
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalConfirmacionDeEliminacionDeDoctor" tabindex="-1" role="dialog" aria-labelledby="LabelConfirmacionDeEliminacionDeDoctor" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="LabelConfirmacionDeEliminacionDeDoctor">
+                    Eliminar Doctor
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@DoctorDtoModel">
+
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="DoctorPorEliminarCedulaDoctor" class="mb-0">Cedula Doctor</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="DoctorPorEliminarCedulaDoctor" class="form-control col-sm-12 col-md-12">@DoctorDtoModel.CedulaDoctor</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="DoctorPorEliminarNombreDoctor" class="mb-0">Nombre Doctor</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="DoctorPorEliminarNombreDoctor" class="form-control col-sm-12 col-md-12">@DoctorDtoModel.NombreDoctor</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="DoctorPorEliminarApellidos" class="mb-0">Apellidos</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="DoctorPorEliminarApellidos" class="form-control col-sm-12 col-md-12" disable>@DoctorDtoModel.Apellidos</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="DoctorPorEliminarTelefono" class="mb-0">Telefono</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="DoctorPorEliminarTelefono" class="form-control col-sm-12 col-md-12" disable>@DoctorDtoModel.Telefono</label>
+                        </div>
+                    </div>
+
+                    <div class="alert bgc-orange-l3 brc-orange-l1 text-dark-tp1" role="alert">
+                        Desea
+                        <a class="alert-link text-danger-d1">
+                            Eliminar
+                        </a>
+                        este registro?
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-primary px-4" @onclick="ConfirmarEliminacionDeDoctor">Sí</button>
                 </div>
             </EditForm>
         </div>
@@ -177,7 +255,7 @@
 
         DoctorDtoModel = new();
 
-        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalAgregarDoctor");
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeDoctor");
 
     }
 
@@ -188,7 +266,7 @@
 
         await ObtenerDoctorPorId(CedulaDoctor);
 
-        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalAgregarDoctor");
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeDoctor");
 
     }
 
@@ -211,10 +289,10 @@
 
         CedulaDoctorPorEliminar = CedulaDoctor;
 
-        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalConfirmacionDeEliminacionDeAula");
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalConfirmacionDeEliminacionDeDoctor");
     }
 
-    private async Task ConfirmarEliminacionDeAula()
+    private async Task ConfirmarEliminacionDeDoctor()
     {
 
         await EliminarDoctor();
@@ -244,7 +322,7 @@
 
         if (response.IsSuccessStatusCode)
         {
-            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeAula");
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeDoctor");
 
             await ObtenerDoctores();
 
@@ -269,7 +347,7 @@
 
         if (response.IsSuccessStatusCode)
         {
-            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeAula");
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeClinica");
 
             await ObtenerDoctores();
 

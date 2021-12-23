@@ -1,0 +1,413 @@
+﻿@page "/pacientes"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<h1>
+    Gestión de Pacientes
+</h1>
+
+<div class="card dcard">
+    <div class="card-body px-1 px-md-3">
+
+        <form autocomplete="off">
+            <div class="d-flex justify-content-between flex-column flex-sm-row mb-3 px-2 px-sm-0">
+                <h3 class="text-125 pl-1 mb-3 mb-sm-0 text-secondary-d4">
+                    Listado de Pacientes
+                </h3>
+
+                <div class="mb-2 mb-sm-0">
+                    <button type="button" class="btn btn-blue px-3 d-block w-100 text-95 radius-round border-2 brc-black-tp10" @onclick="MostrarModalDeAgregar">
+                        <i class="fa fa-plus mr-1"></i>
+                        Agregar <span class="d-sm-none d-md-inline">Paciente</span>
+                    </button>
+                </div>
+            </div>
+
+            @if (ListaDePacientes == null)
+            {
+                <p><em>Cargando Listado De Pacientes...</em></p>
+            }
+            else
+            {
+                <table id="simple-table" class="mb-0 table table-borderless table-bordered-x brc-secondary-l3 text-dark-m2 radius-1 overflow-hidden">
+                    <thead class="text-dark-tp3 bgc-grey-l4 text-90 border-b-1 brc-transparent">
+                        <tr>
+                            <th>Cedula del Paciente</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Telefono</th>
+                            <th>Edad</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="mt-1">
+
+                        @foreach (var Paciente in ListaDePacientes)
+                        {
+                        <tr class="bgc-h-yellow-l4 d-style">
+                            <td class="d-none d-sm-table-cell text-grey-d1">@Paciente.CedulaPaciente</td>
+                            <td class="text-600 text-dark">@Paciente.NombrePaciente</td>
+                            <td class="text-600 text-orange-d2">@Paciente.Apellidos</td>
+                            <td class="d-none d-sm-table-cell text-grey-d1">@Paciente.Telefono</td>
+                            <td class="d-none d-sm-table-cell text-grey-d1">@Paciente.Edad</td>
+                            <td>
+                                <div class="d-none d-lg-flex">
+                                    @*<a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-success btn-a-lighter-success">
+                    <i class="fa fa-pencil-alt"></i>
+                </a>*@
+
+                                    <button type="button" class="btn btn-primary" @onclick="() => MostrarModalDeActualizar(Paciente.CedulaPaciente)">Editar</button>
+
+                                    <a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-danger btn-a-lighter-danger">
+                                        <i class="fa fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalEdicionDePaciente" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="exampleModalLabel">
+                    @(AccionDeEdicion + " " + "Paciente")
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@PacienteDtoModel" OnValidSubmit="@GuardarPaciente">
+
+                <DataAnnotationsValidator />
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CedulaPaciente" class="mb-0">Cedula de Paciente</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="CedulaPaciente" @bind-Value="@PacienteDtoModel.CedulaPaciente" disabled="@(AccionDeEdicion == "Actualizar" ? true : false)"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese la cedula del Paciente" />
+                            <ValidationMessage For="() => PacienteDtoModel.CedulaPaciente" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="NombrePaciente" class="mb-0">Nombre del Paciente</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="NombrePaciente" @bind-Value="@PacienteDtoModel.NombrePaciente"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese el nombre del Paciente" />
+                            <ValidationMessage For="() => PacienteDtoModel.NombrePaciente" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="Apellidos" class="mb-0">Apellidos del Paciente</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="Apellidos" @bind-Value="@PacienteDtoModel.Apellidos"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese Apellidos del Paciente" />
+                            <ValidationMessage For="() => PacienteDtoModel.Apellidos" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="Telefono" class="mb-0">Telefono del Paciente</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="Telefono" @bind-Value="@PacienteDtoModel.Telefono"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese Telefono del Paciente" />
+                            <ValidationMessage For="() => PacienteDtoModel.Telefono" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="Edad" class="mb-0">Edad del Paciente</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputNumber id="Edad" @bind-Value="@PacienteDtoModel.Edad"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese Telefono del Paciente" />
+                            <ValidationMessage For="() => PacienteDtoModel.Edad" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalConfirmacionDeEliminacionDePaciente" tabindex="-1" role="dialog" aria-labelledby="LabelConfirmacionDeEliminacionDePaciente" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="LabelConfirmacionDeEliminacionDePaciente">
+                    Eliminar Paciente
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@PacienteDtoModel">
+
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="PacientePorEliminarCedulaPaciente" class="mb-0">Cedula Paciente</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="PacientePorEliminarCedulaPaciente" class="form-control col-sm-12 col-md-12">@PacienteDtoModel.CedulaPaciente</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="PacientePorEliminarNombrePaciente" class="mb-0">Nombre Paciente</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="PacientePorEliminarNombrePaciente" class="form-control col-sm-12 col-md-12">@PacienteDtoModel.NombrePaciente</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="PacientePorEliminarApellidos" class="mb-0">Apellidos</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="PacientePorEliminarApellidos" class="form-control col-sm-12 col-md-12" disable>@PacienteDtoModel.Apellidos</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="PacientePorEliminarTelefono" class="mb-0">Telefono</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="PacientePorEliminarTelefono" class="form-control col-sm-12 col-md-12" disable>@PacienteDtoModel.Telefono</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="PacientePorEliminarEdad" class="mb-0">Edad</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="PacientePorEliminarEdad" class="form-control col-sm-12 col-md-12" disable>@PacienteDtoModel.Edad</label>
+                        </div>
+                    </div>
+
+                    <div class="alert bgc-orange-l3 brc-orange-l1 text-dark-tp1" role="alert">
+                        Desea
+                        <a class="alert-link text-danger-d1">
+                            Eliminar
+                        </a>
+                        este registro?
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-primary px-4" @onclick="ConfirmarEliminacionDePaciente">Sí</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private PacientesDto[] ListaDePacientes;
+
+    private PacientesDto PacienteDtoModel = new();
+
+    private string AccionDeEdicion = "";
+
+    private string CedulaPacientePorActualizar;
+
+    private string CedulaPacientePorEliminar;
+
+    private string UtlHost = "https://localhost:44332/api";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ObtenerPacientes();
+    }
+
+
+
+    private async Task MostrarModalDeAgregar()
+    {
+
+        AccionDeEdicion = "Agregar";
+
+        PacienteDtoModel = new();
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDePaciente");
+
+    }
+
+    private async Task MostrarModalDeActualizar(string CedulaPaciente)
+    {
+
+        AccionDeEdicion = "Actualizar";
+
+        await ObtenerPacientePorId(CedulaPaciente);
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDePaciente");
+
+    }
+
+    private async Task GuardarPaciente()
+    {
+        if (AccionDeEdicion == "Agregar")
+        {
+            await AgregarPaciente();
+        }
+        else
+        {
+            await ActualizarPaciente();
+        }
+    }
+
+    private async Task MostrarModalDeEliminar(string CedulaPaciente)
+    {
+
+        await ObtenerPacientePorId(CedulaPaciente);
+
+        CedulaPacientePorEliminar = CedulaPaciente;
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalConfirmacionDeEliminacionDePaciente");
+    }
+
+    private async Task ConfirmarEliminacionDePaciente()
+    {
+
+        await EliminarPaciente();
+
+    }
+
+    #region Acciones del modelo que van al API
+
+    private async Task ObtenerPacientes()
+    {
+        ListaDePacientes = await Http.GetFromJsonAsync<PacientesDto[]>($"{UtlHost}/Pacientes");
+    }
+
+    private async Task ObtenerPacientePorId(string CedulaPaciente)
+    {
+        PacienteDtoModel = await Http.GetFromJsonAsync<PacientesDto>($"{UtlHost}/Pacientes/{CedulaPaciente}");
+
+        CedulaPacientePorActualizar = PacienteDtoModel.CedulaPaciente;
+
+    }
+
+    private async Task AgregarPaciente()
+    {
+        var Paciente = PacienteDtoModel;
+
+        using var response = await Http.PostAsJsonAsync($"{UtlHost}/Pacientes", Paciente);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDePaciente");
+
+            await ObtenerPacientes();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Paciente agregada correctamente");
+
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo agregar el Paciente ");
+
+        }
+    }
+
+    private async Task ActualizarPaciente()
+    {
+        var Paciente = PacienteDtoModel;
+
+        using var response = await Http.PutAsJsonAsync($"{UtlHost}/Pacientes/{CedulaPacientePorActualizar}", Paciente);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeClinica");
+
+            await ObtenerPacientes();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Paciente actualizada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo actualizar el Paciente ");
+
+        }
+    }
+
+    private async Task EliminarPaciente()
+    {
+        using var response = await Http.DeleteAsync($"{UtlHost}/Pacientes/{CedulaPacientePorEliminar}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalConfirmacionDeEliminacionDePaciente");
+
+            await ObtenerPacientes();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Paciente eliminada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "Error al eliminar el Paciente");
+
+        }
+    }
+
+    #endregion
+}
+

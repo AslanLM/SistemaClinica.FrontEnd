@@ -1,0 +1,365 @@
+﻿@page "/medicamentodecita"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<h1>
+    Gestión de Medicamento De Cita
+</h1>
+
+<div class="card dcard">
+    <div class="card-body px-1 px-md-3">
+
+        <form autocomplete="off">
+            <div class="d-flex justify-content-between flex-column flex-sm-row mb-3 px-2 px-sm-0">
+                <h3 class="text-125 pl-1 mb-3 mb-sm-0 text-secondary-d4">
+                    Listado de MedicamentosDeCita
+                </h3>
+
+                <div class="mb-2 mb-sm-0">
+                    <button type="button" class="btn btn-blue px-3 d-block w-100 text-95 radius-round border-2 brc-black-tp10" @onclick="MostrarModalDeAgregar">
+                        <i class="fa fa-plus mr-1"></i>
+                        Agregar <span class="d-sm-none d-md-inline">Medicamento De Cita</span>
+                    </button>
+                </div>
+            </div>
+
+            @if (ListaDeMedicamentosDeCita == null)
+            {
+                <p><em>Cargando Listado De MedicamentosDeCita...</em></p>
+            }
+            else
+            {
+                <table id="simple-table" class="mb-0 table table-borderless table-bordered-x brc-secondary-l3 text-dark-m2 radius-1 overflow-hidden">
+                    <thead class="text-dark-tp3 bgc-grey-l4 text-90 border-b-1 brc-transparent">
+                        <tr>
+                            <th>Id de Medicamento</th>
+                            <th>Id de Citas</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="mt-1">
+
+                        @foreach (var MedicamentoDeCita in ListaDeMedicamentosDeCita)
+                        {
+                            <tr class="bgc-h-yellow-l4 d-style">
+                                <td class="d-none d-sm-table-cell text-grey-d1">@MedicamentoDeCita.IdMedicamento</td>
+                                <td class="text-600 text-dark">@MedicamentoDeCita.IdCita</td>
+                                <td>
+                                    <div class="d-none d-lg-flex">
+                                        @*<a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-success btn-a-lighter-success">
+                                                <i class="fa fa-pencil-alt"></i>
+                                            </a>*@
+
+                                        <button type="button" class="btn btn-primary" @onclick="() => MostrarModalDeActualizar(MedicamentoDeCita.IdMedicamento)">Editar</button>
+
+                                        <a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-danger btn-a-lighter-danger">
+                                            <i class="fa fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalEdicionDeMedicamentoDeCita" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="exampleModalLabel">
+                    @(AccionDeEdicion + " " + "MedicamentoDeCita")
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@MedicamentoDeCitaDtoModel" OnValidSubmit="@GuardarMedicamentoDeCita">
+
+                <DataAnnotationsValidator />
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="IdMedicamento" class="mb-0">Id Medicamento</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputNumber id="IdMedicamento" @bind-Value="@MedicamentoDeCitaDtoModel.IdMedicamento" disabled="@(AccionDeEdicion == "Actualizar" ? true : false)"
+                                         class="form-control col-sm-12 col-md-12" placeholder="Ingrese el ID del Medicamento" />
+                            <ValidationMessage For="() => MedicamentoDeCitaDtoModel.IdMedicamento" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="IdCita" class="mb-0">Id Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputNumber id="IdCita" @bind-Value="@MedicamentoDeCitaDtoModel.IdCita" disabled="@(AccionDeEdicion == "Actualizar" ? true : false)"
+                                         class="form-control col-sm-12 col-md-12" placeholder="Ingrese El ID de la Cita" />
+                            <ValidationMessage For="() => MedicamentoDeCitaDtoModel.IdCita" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="PrecioMedicamento" class="mb-0">Precio Medicamento</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputNumber id="IdCita" @bind-Value="@MedicamentoDeCitaDtoModel.PrecioMedicamento"
+                                         class="form-control col-sm-12 col-md-12" placeholder="Ingrese El Precio del Medicamento" />
+                            <ValidationMessage For="() => MedicamentoDeCitaDtoModel.PrecioMedicamento" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalConfirmacionDeEliminacionDeMedicamentoDeCita" tabindex="-1" role="dialog" aria-labelledby="LabelConfirmacionDeEliminacionDeMedicamentoDeCita" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="LabelConfirmacionDeEliminacionDeMedicamentoDeCita">
+                    Eliminar MedicamentoDeCita
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@MedicamentoDeCitaDtoModel">
+
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="MedicamentoDeCitaPorEliminarIdMedicamento" class="mb-0">Id De Medicamento</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="MedicamentoDeCitaPorEliminarIdMedicamento" class="form-control col-sm-12 col-md-12">@MedicamentoDeCitaDtoModel.IdMedicamento</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="MedicamentoDeCitaPorEliminarIdCita" class="mb-0">Id De Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="MedicamentoDeCitaPorEliminarIdCita" class="form-control col-sm-12 col-md-12">@MedicamentoDeCitaDtoModel.IdCita</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="MedicamentoDeCitaPorEliminarPrecioMedicamento" class="mb-0">Precio Medicamento</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="MedicamentoDeCitaPorEliminarPrecioMedicamento" class="form-control col-sm-12 col-md-12">@MedicamentoDeCitaDtoModel.PrecioMedicamento</label>
+                        </div>
+                    </div>
+
+                    <div class="alert bgc-orange-l3 brc-orange-l1 text-dark-tp1" role="alert">
+                        Desea
+                        <a class="alert-link text-danger-d1">
+                            Eliminar
+                        </a>
+                        este registro?
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-primary px-4" @onclick="ConfirmarEliminacionDeMedicamentoDeCita">Sí</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private MedicamentosDeCitasDto[] ListaDeMedicamentosDeCita;
+
+    private MedicamentosDeCitasDto MedicamentoDeCitaDtoModel = new();
+
+    private string AccionDeEdicion = "";
+
+    private int IdMedicamentoPorActualizar;
+
+    private int IdMedicamentoPorEliminar;
+
+    private string UtlHost = "https://localhost:44332/api";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ObtenerMedicamentosDeCita();
+    }
+
+
+
+    private async Task MostrarModalDeAgregar()
+    {
+
+        AccionDeEdicion = "Agregar";
+
+        MedicamentoDeCitaDtoModel = new();
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeMedicamentoDeCita");
+
+    }
+
+    private async Task MostrarModalDeActualizar(int IdMedicamento)
+    {
+
+        AccionDeEdicion = "Actualizar";
+
+        await ObtenerMedicamentoDeCitaPorId(IdMedicamento);
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeMedicamentoDeCita");
+
+    }
+
+    private async Task GuardarMedicamentoDeCita()
+    {
+        if (AccionDeEdicion == "Agregar")
+        {
+            await AgregarMedicamentoDeCita();
+        }
+        else
+        {
+            await ActualizarMedicamentoDeCita();
+        }
+    }
+
+    private async Task MostrarModalDeEliminar(int IdMedicamento)
+    {
+
+        await ObtenerMedicamentoDeCitaPorId(IdMedicamento);
+
+        IdMedicamentoPorEliminar = IdMedicamento;
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalConfirmacionDeEliminacionDeMedicamentoDeCita");
+    }
+
+    private async Task ConfirmarEliminacionDeMedicamentoDeCita()
+    {
+
+        await EliminarMedicamentoDeCita();
+
+    }
+
+    #region Acciones del modelo que van al API
+
+    private async Task ObtenerMedicamentosDeCita()
+    {
+        ListaDeMedicamentosDeCita = await Http.GetFromJsonAsync<MedicamentosDeCitasDto[]>($"{UtlHost}/MedicamentosDeCitas");
+    }
+
+    private async Task ObtenerMedicamentoDeCitaPorId(int IdMedicamento)
+    {
+        MedicamentoDeCitaDtoModel = await Http.GetFromJsonAsync<MedicamentosDeCitasDto>($"{UtlHost}/MedicamentosDeCitas/{IdMedicamento}");
+
+        IdMedicamentoPorActualizar = MedicamentoDeCitaDtoModel.IdMedicamento;
+
+    }
+
+    private async Task AgregarMedicamentoDeCita()
+    {
+        var MedicamentoDeCita = MedicamentoDeCitaDtoModel;
+
+        using var response = await Http.PostAsJsonAsync($"{UtlHost}/MedicamentosDeCitas", MedicamentoDeCita);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeMedicamentoDeCita");
+
+            await ObtenerMedicamentosDeCita();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "MedicamentoDeCita agregada correctamente");
+
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo agregar el MedicamentoDeCita ");
+
+        }
+    }
+
+    private async Task ActualizarMedicamentoDeCita()
+    {
+        var MedicamentoDeCita = MedicamentoDeCitaDtoModel;
+
+        using var response = await Http.PutAsJsonAsync($"{UtlHost}/MedicamentosDeCitas/{IdMedicamentoPorActualizar}", MedicamentoDeCita);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeMedicamentoDeCita");
+
+            await ObtenerMedicamentosDeCita();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "MedicamentoDeCita actualizada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo actualizar el MedicamentoDeCita ");
+
+        }
+    }
+
+    private async Task EliminarMedicamentoDeCita()
+    {
+        using var response = await Http.DeleteAsync($"{UtlHost}/MedicamentosDeCitas/{IdMedicamentoPorEliminar}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalConfirmacionDeEliminacionDeMedicamentoDeCita");
+
+            await ObtenerMedicamentosDeCita();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "MedicamentoDeCita eliminada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "Error al eliminar el MedicamentoDeCita");
+
+        }
+    }
+
+    #endregion
+}
+
+

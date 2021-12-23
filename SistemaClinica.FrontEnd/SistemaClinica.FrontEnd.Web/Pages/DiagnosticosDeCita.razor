@@ -1,0 +1,342 @@
+﻿@page "/diagnosticodecita"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<h1>
+    Gestión de Diagnostico De Cita
+</h1>
+
+<div class="card dcard">
+    <div class="card-body px-1 px-md-3">
+
+        <form autocomplete="off">
+            <div class="d-flex justify-content-between flex-column flex-sm-row mb-3 px-2 px-sm-0">
+                <h3 class="text-125 pl-1 mb-3 mb-sm-0 text-secondary-d4">
+                    Listado de DiagnosticosDeCita
+                </h3>
+
+                <div class="mb-2 mb-sm-0">
+                    <button type="button" class="btn btn-blue px-3 d-block w-100 text-95 radius-round border-2 brc-black-tp10" @onclick="MostrarModalDeAgregar">
+                        <i class="fa fa-plus mr-1"></i>
+                        Agregar <span class="d-sm-none d-md-inline">DiagnosticoDeCita</span>
+                    </button>
+                </div>
+            </div>
+
+            @if (ListaDeDiagnosticosDeCita == null)
+            {
+                <p><em>Cargando Listado De DiagnosticosDeCita...</em></p>
+            }
+            else
+            {
+                <table id="simple-table" class="mb-0 table table-borderless table-bordered-x brc-secondary-l3 text-dark-m2 radius-1 overflow-hidden">
+                    <thead class="text-dark-tp3 bgc-grey-l4 text-90 border-b-1 brc-transparent">
+                        <tr>
+                            <th>Id de Diagnostico</th>
+                            <th>Id de Citas</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="mt-1">
+
+                        @foreach (var DiagnosticoDeCita in ListaDeDiagnosticosDeCita)
+                        {
+                            <tr class="bgc-h-yellow-l4 d-style">
+                                <td class="d-none d-sm-table-cell text-grey-d1">@DiagnosticoDeCita.IdDiagnostico</td>
+                                <td class="text-600 text-dark">@DiagnosticoDeCita.IdCita</td>
+                                <td>
+                                    <div class="d-none d-lg-flex">
+                                        @*<a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-success btn-a-lighter-success">
+                                                <i class="fa fa-pencil-alt"></i>
+                                            </a>*@
+
+                                        <button type="button" class="btn btn-primary" @onclick="() => MostrarModalDeActualizar(DiagnosticoDeCita.IdDiagnostico)">Editar</button>
+
+                                        <a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-danger btn-a-lighter-danger">
+                                            <i class="fa fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalEdicionDeDiagnosticoDeCita" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="exampleModalLabel">
+                    @(AccionDeEdicion + " " + "DiagnosticoDeCita")
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@DiagnosticoDeCitaDtoModel" OnValidSubmit="@GuardarDiagnosticoDeCita">
+
+                <DataAnnotationsValidator />
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="IdDiagnostico" class="mb-0">Id Diagnostico</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputNumber id="IdDiagnostico" @bind-Value="@DiagnosticoDeCitaDtoModel.IdDiagnostico" disabled="@(AccionDeEdicion == "Actualizar" ? true : false)"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese el ID Diagnostico" />
+                            <ValidationMessage For="() => DiagnosticoDeCitaDtoModel.IdDiagnostico" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="IdCita" class="mb-0">Id Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputNumber id="IdCita" @bind-Value="@DiagnosticoDeCitaDtoModel.IdCita" disabled="@(AccionDeEdicion == "Actualizar" ? true : false)"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese el Id Cita" />
+                            <ValidationMessage For="() => DiagnosticoDeCitaDtoModel.IdCita" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalConfirmacionDeEliminacionDeDiagnosticoDeCita" tabindex="-1" role="dialog" aria-labelledby="LabelConfirmacionDeEliminacionDeDiagnosticoDeCita" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="LabelConfirmacionDeEliminacionDeDiagnosticoDeCita">
+                    Eliminar DiagnosticoDeCita
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@DiagnosticoDeCitaDtoModel">
+
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="DiagnosticoDeCitaPorEliminarIdDiagnostico" class="mb-0">Id DiagnosticoDeCita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="DiagnosticoDeCitaPorEliminarIdDiagnostico" class="form-control col-sm-12 col-md-12">@DiagnosticoDeCitaDtoModel.IdDiagnostico</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="DiagnosticoDeCitaPorEliminarIdCita" class="mb-0">Nombre DiagnosticoDeCita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="DiagnosticoDeCitaPorEliminarIdCita" class="form-control col-sm-12 col-md-12">@DiagnosticoDeCitaDtoModel.IdCita</label>
+                        </div>
+                    </div>
+
+                    <div class="alert bgc-orange-l3 brc-orange-l1 text-dark-tp1" role="alert">
+                        Desea
+                        <a class="alert-link text-danger-d1">
+                            Eliminar
+                        </a>
+                        este registro?
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-primary px-4" @onclick="ConfirmarEliminacionDeDiagnosticoDeCita">Sí</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private DiagnosticosDeCitasDto[] ListaDeDiagnosticosDeCita;
+
+    private DiagnosticosDeCitasDto DiagnosticoDeCitaDtoModel = new();
+
+    private string AccionDeEdicion = "";
+
+    private int IdDiagnosticoPorActualizar;
+
+    private int IdDiagnosticoPorEliminar;
+
+    private string UtlHost = "https://localhost:44332/api";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ObtenerDiagnosticosDeCita();
+    }
+
+
+
+    private async Task MostrarModalDeAgregar()
+    {
+
+        AccionDeEdicion = "Agregar";
+
+        DiagnosticoDeCitaDtoModel = new();
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeDiagnosticoDeCita");
+
+    }
+
+    private async Task MostrarModalDeActualizar(int IdDiagnostico)
+    {
+
+        AccionDeEdicion = "Actualizar";
+
+        await ObtenerDiagnosticoDeCitaPorId(IdDiagnostico);
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeDiagnosticoDeCita");
+
+    }
+
+    private async Task GuardarDiagnosticoDeCita()
+    {
+        if (AccionDeEdicion == "Agregar")
+        {
+            await AgregarDiagnosticoDeCita();
+        }
+        else
+        {
+            await ActualizarDiagnosticoDeCita();
+        }
+    }
+
+    private async Task MostrarModalDeEliminar(int IdDiagnostico)
+    {
+
+        await ObtenerDiagnosticoDeCitaPorId(IdDiagnostico);
+
+        IdDiagnosticoPorEliminar = IdDiagnostico;
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalConfirmacionDeEliminacionDeDiagnosticoDeCita");
+    }
+
+    private async Task ConfirmarEliminacionDeDiagnosticoDeCita()
+    {
+
+        await EliminarDiagnosticoDeCita();
+
+    }
+
+    #region Acciones del modelo que van al API
+
+    private async Task ObtenerDiagnosticosDeCita()
+    {
+        ListaDeDiagnosticosDeCita = await Http.GetFromJsonAsync<DiagnosticosDeCitasDto[]>($"{UtlHost}/DiagnosticosDeCitas");
+    }
+
+    private async Task ObtenerDiagnosticoDeCitaPorId(int IdDiagnostico)
+    {
+        DiagnosticoDeCitaDtoModel = await Http.GetFromJsonAsync<DiagnosticosDeCitasDto>($"{UtlHost}/DiagnosticosDeCitas/{IdDiagnostico}");
+
+        IdDiagnosticoPorActualizar = DiagnosticoDeCitaDtoModel.IdDiagnostico;
+
+    }
+
+    private async Task AgregarDiagnosticoDeCita()
+    {
+        var DiagnosticoDeCita = DiagnosticoDeCitaDtoModel;
+
+        using var response = await Http.PostAsJsonAsync($"{UtlHost}/DiagnosticosDeCitas", DiagnosticoDeCita);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeDiagnosticoDeCita");
+
+            await ObtenerDiagnosticosDeCita();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "DiagnosticoDeCita agregada correctamente");
+
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo agregar el DiagnosticoDeCita ");
+
+        }
+    }
+
+    private async Task ActualizarDiagnosticoDeCita()
+    {
+        var DiagnosticoDeCita = DiagnosticoDeCitaDtoModel;
+
+        using var response = await Http.PutAsJsonAsync($"{UtlHost}/DiagnosticosDeCitas/{IdDiagnosticoPorActualizar}", DiagnosticoDeCita);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeDiagnosticoDeCita");
+
+            await ObtenerDiagnosticosDeCita();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "DiagnosticoDeCita actualizada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo actualizar el DiagnosticoDeCita ");
+
+        }
+    }
+
+    private async Task EliminarDiagnosticoDeCita()
+    {
+        using var response = await Http.DeleteAsync($"{UtlHost}/DiagnosticosDeCitas/{IdDiagnosticoPorEliminar}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalConfirmacionDeEliminacionDeDiagnosticoDeCita");
+
+            await ObtenerDiagnosticosDeCita();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "DiagnosticoDeCita eliminada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "Error al eliminar el DiagnosticoDeCita");
+
+        }
+    }
+
+    #endregion
+}
+

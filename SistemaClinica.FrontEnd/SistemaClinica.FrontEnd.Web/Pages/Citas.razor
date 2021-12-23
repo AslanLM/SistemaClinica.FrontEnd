@@ -1,0 +1,537 @@
+﻿@page "/citas"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<h1>
+    Gestión de Citas
+</h1>
+
+<div class="card dcard">
+    <div class="card-body px-1 px-md-3">
+
+        <form autocomplete="off">
+            <div class="d-flex justify-content-between flex-column flex-sm-row mb-3 px-2 px-sm-0">
+                <h3 class="text-125 pl-1 mb-3 mb-sm-0 text-secondary-d4">
+                    Listado de Citas
+                </h3>
+
+                <div class="mb-2 mb-sm-0">
+                    <button type="button" class="btn btn-blue px-3 d-block w-100 text-95 radius-round border-2 brc-black-tp10" @onclick="MostrarModalDeAgregar">
+                        <i class="fa fa-plus mr-1"></i>
+                        Agregar <span class="d-sm-none d-md-inline">Cita</span>
+                    </button>
+                </div>
+            </div>
+
+            @if (ListaDeCitas == null)
+            {
+                <p><em>Cargando Listado De Citas...</em></p>
+            }
+            else
+            {
+                <table id="simple-table" class="mb-0 table table-borderless table-bordered-x brc-secondary-l3 text-dark-m2 radius-1 overflow-hidden">
+                    <thead class="text-dark-tp3 bgc-grey-l4 text-90 border-b-1 brc-transparent">
+                        <tr>
+                            <th>Id del Cita</th>
+                            <th>Fecha y Hora Inicio Cita</th>
+                            <th>Fecha y Hora Fin Cita</th>
+                            <th>Cedula Doctor</th>
+                            <th>Cedula Paciente</th>
+                            <th>Id Consultorio</th>
+                            <th>Id Diagnostico</th>
+                            <th>Monto de Consulta</th>
+                            <th>Monto de Medicamentos</th>
+                            <th>Monto Total</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="mt-1">
+
+                        @foreach (var Cita in ListaDeCitas)
+                        {
+                        <tr class="bgc-h-yellow-l4 d-style">
+                            <td class="d-none d-sm-table-cell text-grey-d1">@Cita.IdCita</td>
+                            <td class="text-600 text-dark">@Cita.FechaYHoraInicioCita</td>
+                            <td class="text-600 text-orange-d2">@Cita.FechaYHoraFinCita</td>
+                            <td class="d-none d-sm-table-cell text-grey-d1">@Cita.CedulaDoctor</td>
+                            <td class="d-none d-sm-table-cell text-grey-d1">@Cita.CedulaPaciente</td>
+                            <td class="text-600 text-dark">@Cita.IdConsultorio</td>
+                            <td class="text-600 text-orange-d2">@Cita.IdDiagnostico</td>
+                            <td class="d-none d-sm-table-cell text-grey-d1">@Cita.MontoDeConsulta</td>
+                            <td class="d-none d-sm-table-cell text-grey-d1">@Cita.MontoDeMedicamentos</td>
+                            <td class="d-none d-sm-table-cell text-grey-d1">@Cita.MontoTotal</td>
+                            <td>
+                                <div class="d-none d-lg-flex">
+                                    @*<a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-success btn-a-lighter-success">
+                    <i class="fa fa-pencil-alt"></i>
+                </a>*@
+
+                                    <button type="button" class="btn btn-primary" @onclick="() => MostrarModalDeActualizar(Cita.IdCita)">Editar</button>
+
+                                    <a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-danger btn-a-lighter-danger">
+                                        <i class="fa fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalEdicionDeCita" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="exampleModalLabel">
+                    @(AccionDeEdicion + " " + "Cita")
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@CitaDtoModel" OnValidSubmit="@GuardarCita">
+
+                <DataAnnotationsValidator />
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="IdCita" class="mb-0">Id de Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputNumber id="IdCita" @bind-Value="@CitaDtoModel.IdCita" disabled="@(AccionDeEdicion == "Actualizar" ? true : false)"
+                                         class="form-control col-sm-12 col-md-12" placeholder="Ingrese la Id del Cita" />
+                            <ValidationMessage For="() => CitaDtoModel.IdCita" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="FechaYHoraInicioCita" class="mb-0">Fecha Y Hora Inicio Cita Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputDate id="FechaYHoraInicioCita" @bind-Value="@CitaDtoModel.FechaYHoraInicioCita"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese la Fecha y hora del inicio de Cita" />
+                            <ValidationMessage For="() => CitaDtoModel.FechaYHoraInicioCita" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="FechaYHoraFinCita" class="mb-0">Fecha y Hora Fin Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputDate id="FechaYHoraFinCita" @bind-Value="@CitaDtoModel.FechaYHoraFinCita"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese La Fecha y Hora del fin de Cita" />
+                            <ValidationMessage For="() => CitaDtoModel.FechaYHoraFinCita" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CedulaDoctor" class="mb-0">Cedula Doctor de la Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="CedulaDoctor" @bind-Value="@CitaDtoModel.CedulaDoctor"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese Cedula Doctor de la Cita" />
+                            <ValidationMessage For="() => CitaDtoModel.CedulaDoctor" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CedulaPaciente" class="mb-0">Cedula Paciente de la Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="CedulaPaciente" @bind-Value="@CitaDtoModel.CedulaPaciente"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese Cedula Paciente de la Cita" />
+                            <ValidationMessage For="() => CitaDtoModel.CedulaPaciente" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                        <label for="IdConsultorio" class="mb-0">Id Consultorio de la Cita</label>
+                    </div>
+
+                    <div class="col-sm-8">
+                        <InputText id="IdConsultorio" @bind-Value="@CitaDtoModel.IdConsultorio"
+                                   class="form-control col-sm-12 col-md-12" placeholder="Ingrese Id Consultorio de la Cita" />
+                        <ValidationMessage For="() => CitaDtoModel.IdConsultorio" />
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                        <label for="IdDiagnostico" class="mb-0">Id Diagnostico de la Cita</label>
+                    </div>
+
+                    <div class="col-sm-8">
+                        <InputNumber id="IdDiagnostico" @bind-Value="@CitaDtoModel.IdDiagnostico"
+                                     class="form-control col-sm-12 col-md-12" placeholder="Ingrese Id Diagnostico de la Cita" />
+                        <ValidationMessage For="() => CitaDtoModel.IdDiagnostico" />
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                        <label for="MontoDeConsulta" class="mb-0">Monto De Consulta</label>
+                    </div>
+
+                    <div class="col-sm-8">
+                        <InputNumber id="MontoDeConsulta" @bind-Value="@CitaDtoModel.MontoDeConsulta"
+                                     class="form-control col-sm-12 col-md-12" placeholder="Ingrese Monto De Consulta" />
+                        <ValidationMessage For="() => CitaDtoModel.MontoDeConsulta" />
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                        <label for="MontoDeMedicamentos" class="mb-0">Monto De Medicamentos</label>
+                    </div>
+
+                    <div class="col-sm-8">
+                        <InputNumber id="MontoDeConsulta" @bind-Value="@CitaDtoModel.MontoDeMedicamentos"
+                                     class="form-control col-sm-12 col-md-12" placeholder="Ingrese Monto De Medicamentos" />
+                        <ValidationMessage For="() => CitaDtoModel.MontoDeMedicamentos" />
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                        <label for="MontoTotal" class="mb-0">Monto Total</label>
+                    </div>
+
+                    <div class="col-sm-8">
+                        <InputNumber id="MontoDeConsulta" @bind-Value="@CitaDtoModel.MontoTotal"
+                                     class="form-control col-sm-12 col-md-12" placeholder="Ingrese Monto Total" />
+                        <ValidationMessage For="() => CitaDtoModel.MontoTotal" />
+                    </div>
+                </div>
+
+
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalConfirmacionDeEliminacionDeCita" tabindex="-1" role="dialog" aria-labelledby="LabelConfirmacionDeEliminacionDeCita" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="LabelConfirmacionDeEliminacionDeCita">
+                    Eliminar Cita
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@CitaDtoModel">
+
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CitaPorEliminarIdCita" class="mb-0">Id Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="CitaPorEliminarIdCita" class="form-control col-sm-12 col-md-12">@CitaDtoModel.IdCita</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CitaPorEliminarFechaYHoraInicioCita" class="mb-0">Fecha y hora Inicio Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="CitaPorEliminarFechaYHoraInicioCita" class="form-control col-sm-12 col-md-12">@CitaDtoModel.FechaYHoraInicioCita</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CitaPorEliminarFechaYHoraFinCita" class="mb-0">Fecha y hora Fin Cita</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="CitaPorEliminarFechaYHoraFinCita" class="form-control col-sm-12 col-md-12" disable>@CitaDtoModel.FechaYHoraFinCita</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CitaPorEliminarCedulaDoctor" class="mb-0">Cedula Doctor</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="CitaPorEliminarCedulaDoctor" class="form-control col-sm-12 col-md-12" disable>@CitaDtoModel.CedulaDoctor</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CitaPorEliminarCedulaPaciente" class="mb-0">Cedula Paciente</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="CitaPorEliminarCedulaPaciente" class="form-control col-sm-12 col-md-12" disable>@CitaDtoModel.CedulaPaciente</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CitaPorEliminarIdConsultorio" class="mb-0">Id Consultorio</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="CitaPorEliminarIdConsultorio" class="form-control col-sm-12 col-md-12" disable>@CitaDtoModel.IdConsultorio</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CitaPorEliminarIdDiagnostico" class="mb-0">Id Diagnostico</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="CitaPorEliminarIdDiagnostico" class="form-control col-sm-12 col-md-12" disable>@CitaDtoModel.IdDiagnostico</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CitaPorEliminarMontoDeConsulta" class="mb-0">Monto de Consulta</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="CitaPorEliminarMontoDeConsulta" class="form-control col-sm-12 col-md-12" disable>@CitaDtoModel.MontoDeConsulta</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CitaPorEliminarMontoDeMedicamentos" class="mb-0">Monto de Medicamentos</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="CitaPorEliminarMontoDeMedicamentos" class="form-control col-sm-12 col-md-12" disable>@CitaDtoModel.MontoDeMedicamentos</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CitaPorEliminarMontoTotal" class="mb-0">Monto Total</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="CitaPorEliminarMontoTotal" class="form-control col-sm-12 col-md-12" disable>@CitaDtoModel.MontoTotal</label>
+                        </div>
+                    </div>
+
+                    <div class="alert bgc-orange-l3 brc-orange-l1 text-dark-tp1" role="alert">
+                        Desea
+                        <a class="alert-link text-danger-d1">
+                            Eliminar
+                        </a>
+                        este registro?
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-primary px-4" @onclick="ConfirmarEliminacionDeCita">Sí</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private CitasDto[] ListaDeCitas;
+
+    private CitasDto CitaDtoModel = new();
+
+    private string AccionDeEdicion = "";
+
+    private int IdCitaPorActualizar;
+
+    private int IdCitaPorEliminar;
+
+    private string UtlHost = "https://localhost:44332/api";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ObtenerCitas();
+    }
+
+
+
+    private async Task MostrarModalDeAgregar()
+    {
+
+        AccionDeEdicion = "Agregar";
+
+        CitaDtoModel = new();
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeCita");
+
+    }
+
+    private async Task MostrarModalDeActualizar(int IdCita)
+    {
+
+        AccionDeEdicion = "Actualizar";
+
+        await ObtenerCitaPorId(IdCita);
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeCita");
+
+    }
+
+    private async Task GuardarCita()
+    {
+        if (AccionDeEdicion == "Agregar")
+        {
+            await AgregarCita();
+        }
+        else
+        {
+            await ActualizarCita();
+        }
+    }
+
+    private async Task MostrarModalDeEliminar(int IdCita)
+    {
+
+        await ObtenerCitaPorId(IdCita);
+
+        IdCitaPorEliminar = IdCita;
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalConfirmacionDeEliminacionDeCita");
+    }
+
+    private async Task ConfirmarEliminacionDeCita()
+    {
+
+        await EliminarCita();
+
+    }
+
+    #region Acciones del modelo que van al API
+
+    private async Task ObtenerCitas()
+    {
+        ListaDeCitas = await Http.GetFromJsonAsync<CitasDto[]>($"{UtlHost}/Citas");
+    }
+
+    private async Task ObtenerCitaPorId(int IdCita)
+    {
+        CitaDtoModel = await Http.GetFromJsonAsync<CitasDto>($"{UtlHost}/Citas/{IdCita}");
+
+        IdCitaPorActualizar = CitaDtoModel.IdCita;
+
+    }
+
+    private async Task AgregarCita()
+    {
+        var Cita = CitaDtoModel;
+
+        using var response = await Http.PostAsJsonAsync($"{UtlHost}/Citas", Cita);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeCita");
+
+            await ObtenerCitas();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Cita agregada correctamente");
+
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo agregar el Cita ");
+
+        }
+    }
+
+    private async Task ActualizarCita()
+    {
+        var Cita = CitaDtoModel;
+
+        using var response = await Http.PutAsJsonAsync($"{UtlHost}/Citas/{IdCitaPorActualizar}", Cita);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeClinica");
+
+            await ObtenerCitas();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Cita actualizada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo actualizar el Cita ");
+
+        }
+    }
+
+    private async Task EliminarCita()
+    {
+        using var response = await Http.DeleteAsync($"{UtlHost}/Citas/{IdCitaPorEliminar}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalConfirmacionDeEliminacionDeCita");
+
+            await ObtenerCitas();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Cita eliminada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "Error al eliminar el Cita");
+
+        }
+    }
+
+    #endregion
+}
+
+

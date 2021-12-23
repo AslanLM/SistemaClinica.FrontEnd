@@ -1,0 +1,367 @@
+﻿@page "/consultorio"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<h1>
+    Gestión de Consultorio
+</h1>
+
+<div class="card dcard">
+    <div class="card-body px-1 px-md-3">
+
+        <form autocomplete="off">
+            <div class="d-flex justify-content-between flex-column flex-sm-row mb-3 px-2 px-sm-0">
+                <h3 class="text-125 pl-1 mb-3 mb-sm-0 text-secondary-d4">
+                    Listado de Consultorios
+                </h3>
+
+                <div class="mb-2 mb-sm-0">
+                    <button type="button" class="btn btn-blue px-3 d-block w-100 text-95 radius-round border-2 brc-black-tp10" @onclick="MostrarModalDeAgregar">
+                        <i class="fa fa-plus mr-1"></i>
+                        Agregar <span class="d-sm-none d-md-inline">Consultorio</span>
+                    </button>
+                </div>
+            </div>
+
+            @if (ListaDeConsultorios == null)
+            {
+                <p><em>Cargando Listado De Consultorios...</em></p>
+            }
+            else
+            {
+                <table id="simple-table" class="mb-0 table table-borderless table-bordered-x brc-secondary-l3 text-dark-m2 radius-1 overflow-hidden">
+                    <thead class="text-dark-tp3 bgc-grey-l4 text-90 border-b-1 brc-transparent">
+                        <tr>
+                            <th>Id del Consultorio</th>
+                            <th>Nombre del Consultorio</th>
+                            <th>Id de la Clinica</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="mt-1">
+
+                        @foreach (var Consultorio in ListaDeConsultorios)
+                        {
+                            <tr class="bgc-h-yellow-l4 d-style">
+                                <td class="d-none d-sm-table-cell text-grey-d1">@Consultorio.IdConsultorio</td>
+                                <td class="text-600 text-dark">@Consultorio.NombreConsultorio</td>
+                                <td class="text-600 text-orange-d2">@Consultorio.IdClinica</td>
+                                <td>
+                                    <div class="d-none d-lg-flex">
+                                        @*<a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-success btn-a-lighter-success">
+                                                <i class="fa fa-pencil-alt"></i>
+                                            </a>*@
+
+                                        <button type="button" class="btn btn-primary" @onclick="() => MostrarModalDeActualizar(Consultorio.IdConsultorio)">Editar</button>
+
+                                        <a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-danger btn-a-lighter-danger">
+                                            <i class="fa fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalEdicionDeConsultorio" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="exampleModalLabel">
+                    @(AccionDeEdicion + " " + "Consultorio")
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@ConsultorioDtoModel" OnValidSubmit="@GuardarConsultorio">
+
+                <DataAnnotationsValidator />
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="IdConsultorio" class="mb-0">Id de Consultorio</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="IdConsultorio" @bind-Value="@ConsultorioDtoModel.IdConsultorio" disabled="@(AccionDeEdicion == "Actualizar" ? true : false)"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese la Id del Consultorio" />
+                            <ValidationMessage For="() => ConsultorioDtoModel.IdConsultorio" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="NombreConsultorio" class="mb-0">Nombre del Consultorio</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="NombreConsultorio" @bind-Value="@ConsultorioDtoModel.NombreConsultorio"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese el nombre del Consultorio" />
+                            <ValidationMessage For="() => ConsultorioDtoModel.NombreConsultorio" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="IdClinica" class="mb-0">Id de la Clinica</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputNumber id="IdClinica" @bind-Value="@ConsultorioDtoModel.IdClinica"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese Id del Consultorio" />
+                            <ValidationMessage For="() => ConsultorioDtoModel.IdClinica" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalConfirmacionDeEliminacionDeConsultorio" tabindex="-1" role="dialog" aria-labelledby="LabelConfirmacionDeEliminacionDeConsultorio" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="LabelConfirmacionDeEliminacionDeConsultorio">
+                    Eliminar Consultorio
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@ConsultorioDtoModel">
+
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="ConsultorioPorEliminarIdConsultorio" class="mb-0">Id Consultorio</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="ConsultorioPorEliminarIdConsultorio" class="form-control col-sm-12 col-md-12">@ConsultorioDtoModel.IdConsultorio</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="ConsultorioPorEliminarNombreConsultorio" class="mb-0">Nombre Consultorio</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="ConsultorioPorEliminarNombreConsultorio" class="form-control col-sm-12 col-md-12">@ConsultorioDtoModel.NombreConsultorio</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="ConsultorioPorEliminarIdClinica" class="mb-0">Id Clinica</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="ConsultorioPorEliminarIdClinica" class="form-control col-sm-12 col-md-12" disable>@ConsultorioDtoModel.IdClinica</label>
+                        </div>
+                    </div>
+
+                    <div class="alert bgc-orange-l3 brc-orange-l1 text-dark-tp1" role="alert">
+                        Desea
+                        <a class="alert-link text-danger-d1">
+                            Eliminar
+                        </a>
+                        este registro?
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-primary px-4" @onclick="ConfirmarEliminacionDeConsultorio">Sí</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private ConsultoriosDto[] ListaDeConsultorios;
+
+    private ConsultoriosDto ConsultorioDtoModel = new();
+
+    private string AccionDeEdicion = "";
+
+    private string IdConsultorioPorActualizar;
+
+    private string IdConsultorioPorEliminar;
+
+    private string UtlHost = "https://localhost:44332/api";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ObtenerConsultorios();
+    }
+
+
+
+    private async Task MostrarModalDeAgregar()
+    {
+
+        AccionDeEdicion = "Agregar";
+
+        ConsultorioDtoModel = new();
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeConsultorio");
+
+    }
+
+    private async Task MostrarModalDeActualizar(string IdConsultorio)
+    {
+
+        AccionDeEdicion = "Actualizar";
+
+        await ObtenerConsultorioPorId(IdConsultorio);
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeConsultorio");
+
+    }
+
+    private async Task GuardarConsultorio()
+    {
+        if (AccionDeEdicion == "Agregar")
+        {
+            await AgregarConsultorio();
+        }
+        else
+        {
+            await ActualizarConsultorio();
+        }
+    }
+
+    private async Task MostrarModalDeEliminar(string IdConsultorio)
+    {
+
+        await ObtenerConsultorioPorId(IdConsultorio);
+
+        IdConsultorioPorEliminar = IdConsultorio;
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalConfirmacionDeEliminacionDeConsultorio");
+    }
+
+    private async Task ConfirmarEliminacionDeConsultorio()
+    {
+
+        await EliminarConsultorio();
+
+    }
+
+    #region Acciones del modelo que van al API
+
+    private async Task ObtenerConsultorios()
+    {
+        ListaDeConsultorios = await Http.GetFromJsonAsync<ConsultoriosDto[]>($"{UtlHost}/Consultorio");
+    }
+
+    private async Task ObtenerConsultorioPorId(string IdConsultorio)
+    {
+        ConsultorioDtoModel = await Http.GetFromJsonAsync<ConsultoriosDto>($"{UtlHost}/Consultorio/{IdConsultorio}");
+
+        IdConsultorioPorActualizar = ConsultorioDtoModel.IdConsultorio;
+
+    }
+
+    private async Task AgregarConsultorio()
+    {
+        var Consultorio = ConsultorioDtoModel;
+
+        using var response = await Http.PostAsJsonAsync($"{UtlHost}/Consultorio", Consultorio);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeConsultorio");
+
+            await ObtenerConsultorios();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Consultorio agregada correctamente");
+
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo agregar el Consultorio ");
+
+        }
+    }
+
+    private async Task ActualizarConsultorio()
+    {
+        var Consultorio = ConsultorioDtoModel;
+
+        using var response = await Http.PutAsJsonAsync($"{UtlHost}/Consultorio/{IdConsultorioPorActualizar}", Consultorio);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeClinica");
+
+            await ObtenerConsultorios();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Consultorio actualizada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo actualizar el Consultorio ");
+
+        }
+    }
+
+    private async Task EliminarConsultorio()
+    {
+        using var response = await Http.DeleteAsync($"{UtlHost}/Consultorio/{IdConsultorioPorEliminar}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalConfirmacionDeEliminacionDeConsultorio");
+
+            await ObtenerConsultorios();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Consultorio eliminada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "Error al eliminar el Consultorio");
+
+        }
+    }
+
+    #endregion
+}
+

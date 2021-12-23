@@ -1,0 +1,345 @@
+﻿@page "/diagnostico"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<h1>
+    Gestión de Diagnosticos
+</h1>
+
+<div class="card dcard">
+    <div class="card-body px-1 px-md-3">
+
+        <form autocomplete="off">
+            <div class="d-flex justify-content-between flex-column flex-sm-row mb-3 px-2 px-sm-0">
+                <h3 class="text-125 pl-1 mb-3 mb-sm-0 text-secondary-d4">
+                    Listado de Diagnosticos
+                </h3>
+
+                <div class="mb-2 mb-sm-0">
+                    <button type="button" class="btn btn-blue px-3 d-block w-100 text-95 radius-round border-2 brc-black-tp10" @onclick="MostrarModalDeAgregar">
+                        <i class="fa fa-plus mr-1"></i>
+                        Agregar <span class="d-sm-none d-md-inline">Diagnostico</span>
+                    </button>
+                </div>
+            </div>
+
+            @if (ListaDeDiagnosticos == null)
+            {
+                <p><em>Cargando Listado De Diagnosticos...</em></p>
+            }
+            else
+            {
+                <table id="simple-table" class="mb-0 table table-borderless table-bordered-x brc-secondary-l3 text-dark-m2 radius-1 overflow-hidden">
+                    <thead class="text-dark-tp3 bgc-grey-l4 text-90 border-b-1 brc-transparent">
+                        <tr>
+                            <th>Id del Diagnostico</th>
+                            <th>Diagnostico</th>
+                       
+                        </tr>
+                    </thead>
+
+                    <tbody class="mt-1">
+
+                        @foreach (var Diagnostico in ListaDeDiagnosticos)
+                        {
+                            <tr class="bgc-h-yellow-l4 d-style">
+                                <td class="d-none d-sm-table-cell text-grey-d1">@Diagnostico.IdDiagnostico</td>
+                                <td class="text-600 text-dark">@Diagnostico.Diagnostico</td>
+                                <td>
+                                    <div class="d-none d-lg-flex">
+                                        @*<a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-success btn-a-lighter-success">
+                                                <i class="fa fa-pencil-alt"></i>
+                                            </a>*@
+
+                                        <button type="button" class="btn btn-primary" @onclick="() => MostrarModalDeActualizar(Diagnostico.IdDiagnostico)">Editar</button>
+
+                                        <a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-danger btn-a-lighter-danger">
+                                            <i class="fa fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalEdicionDeDiagnostico" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="exampleModalLabel">
+                    @(AccionDeEdicion + " " + "Diagnostico")
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@DiagnosticoDtoModel" OnValidSubmit="@GuardarDiagnostico">
+
+                <DataAnnotationsValidator />
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="IdDiagnostico" class="mb-0">Id de Diagnostico</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputNumber id="IdDiagnostico" @bind-Value="@DiagnosticoDtoModel.IdDiagnostico" disabled="@(AccionDeEdicion == "Actualizar" ? true : false)"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese la Id del Diagnostico" />
+                            <ValidationMessage For="() => DiagnosticoDtoModel.IdDiagnostico" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="Diagnostico" class="mb-0">Nombre del Diagnostico</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="Diagnostico" @bind-Value="@DiagnosticoDtoModel.Diagnostico"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese el nombre del Diagnostico" />
+                            <ValidationMessage For="() => DiagnosticoDtoModel.Diagnostico" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalConfirmacionDeEliminacionDeDiagnostico" tabindex="-1" role="dialog" aria-labelledby="LabelConfirmacionDeEliminacionDeDiagnostico" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="LabelConfirmacionDeEliminacionDeDiagnostico">
+                    Eliminar Diagnostico
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@DiagnosticoDtoModel">
+
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="DiagnosticoPorEliminarIdDiagnostico" class="mb-0">Id Diagnostico</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="DiagnosticoPorEliminarIdDiagnostico" class="form-control col-sm-12 col-md-12">@DiagnosticoDtoModel.IdDiagnostico</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="DiagnosticoPorEliminarDiagnostico" class="mb-0">Diagnostico</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <label for="DiagnosticoPorEliminarDiagnostico" class="form-control col-sm-12 col-md-12">@DiagnosticoDtoModel.Diagnostico</label>
+                        </div>
+                    </div>
+
+
+                    <div class="alert bgc-orange-l3 brc-orange-l1 text-dark-tp1" role="alert">
+                        Desea
+                        <a class="alert-link text-danger-d1">
+                            Eliminar
+                        </a>
+                        este registro?
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-primary px-4" @onclick="ConfirmarEliminacionDeDiagnostico">Sí</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private DiagnosticosDto[] ListaDeDiagnosticos;
+
+    private DiagnosticosDto DiagnosticoDtoModel = new();
+
+    private string AccionDeEdicion = "";
+
+    private int IdDiagnosticoPorActualizar;
+
+    private int IdDiagnosticoPorEliminar;
+
+    private string UtlHost = "https://localhost:44332/api";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ObtenerDiagnosticos();
+    }
+
+
+
+    private async Task MostrarModalDeAgregar()
+    {
+
+        AccionDeEdicion = "Agregar";
+
+        DiagnosticoDtoModel = new();
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeDiagnostico");
+
+    }
+
+    private async Task MostrarModalDeActualizar(int IdDiagnostico)
+    {
+
+        AccionDeEdicion = "Actualizar";
+
+        await ObtenerDiagnosticoPorId(IdDiagnostico);
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalEdicionDeDiagnostico");
+
+    }
+
+    private async Task GuardarDiagnostico()
+    {
+        if (AccionDeEdicion == "Agregar")
+        {
+            await AgregarDiagnostico();
+        }
+        else
+        {
+            await ActualizarDiagnostico();
+        }
+    }
+
+    private async Task MostrarModalDeEliminar(int IdDiagnostico)
+    {
+
+        await ObtenerDiagnosticoPorId(IdDiagnostico);
+
+        IdDiagnosticoPorEliminar = IdDiagnostico;
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalConfirmacionDeEliminacionDeDiagnostico");
+    }
+
+    private async Task ConfirmarEliminacionDeDiagnostico()
+    {
+
+        await EliminarDiagnostico();
+
+    }
+
+    #region Acciones del modelo que van al API
+
+    private async Task ObtenerDiagnosticos()
+    {
+        ListaDeDiagnosticos = await Http.GetFromJsonAsync<DiagnosticosDto[]>($"{UtlHost}/Diagnostico");
+    }
+
+    private async Task ObtenerDiagnosticoPorId(int IdDiagnostico)
+    {
+        DiagnosticoDtoModel = await Http.GetFromJsonAsync<DiagnosticosDto>($"{UtlHost}/Diagnostico/{IdDiagnostico}");
+
+        IdDiagnosticoPorActualizar = DiagnosticoDtoModel.IdDiagnostico;
+
+    }
+
+    private async Task AgregarDiagnostico()
+    {
+        var Diagnostico = DiagnosticoDtoModel;
+
+        using var response = await Http.PostAsJsonAsync($"{UtlHost}/Diagnostico", Diagnostico);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeDiagnostico");
+
+            await ObtenerDiagnosticos();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Diagnostico agregada correctamente");
+
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo agregar el Diagnostico ");
+
+        }
+    }
+
+    private async Task ActualizarDiagnostico()
+    {
+        var Diagnostico = DiagnosticoDtoModel;
+
+        using var response = await Http.PutAsJsonAsync($"{UtlHost}/Diagnostico/{IdDiagnosticoPorActualizar}", Diagnostico);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeClinica");
+
+            await ObtenerDiagnosticos();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Diagnostico actualizada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo actualizar el Diagnostico ");
+
+        }
+    }
+
+    private async Task EliminarDiagnostico()
+    {
+        using var response = await Http.DeleteAsync($"{UtlHost}/Diagnostico/{IdDiagnosticoPorEliminar}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalConfirmacionDeEliminacionDeDiagnostico");
+
+            await ObtenerDiagnosticos();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Diagnostico eliminada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "Error al eliminar el Diagnostico");
+
+        }
+    }
+
+    #endregion
+}
+
+
