@@ -1,0 +1,311 @@
+﻿@page "/doctores"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<h1>
+    Gestión de Doctores
+</h1>
+
+<div class="card dcard">
+    <div class="card-body px-1 px-md-3">
+
+        <form autocomplete="off">
+            <div class="d-flex justify-content-between flex-column flex-sm-row mb-3 px-2 px-sm-0">
+                <h3 class="text-125 pl-1 mb-3 mb-sm-0 text-secondary-d4">
+                    Listado de Doctores
+                </h3>
+
+                <div class="mb-2 mb-sm-0">
+                    <button type="button" class="btn btn-blue px-3 d-block w-100 text-95 radius-round border-2 brc-black-tp10" @onclick="MostrarModalDeAgregar">
+                        <i class="fa fa-plus mr-1"></i>
+                        Agregar <span class="d-sm-none d-md-inline">Doctor</span>
+                    </button>
+                </div>
+            </div>
+
+            @if (ListaDeDoctores == null)
+            {
+                <p><em>Cargando Listado De Doctores...</em></p>
+            }
+            else
+            {
+                <table id="simple-table" class="mb-0 table table-borderless table-bordered-x brc-secondary-l3 text-dark-m2 radius-1 overflow-hidden">
+                    <thead class="text-dark-tp3 bgc-grey-l4 text-90 border-b-1 brc-transparent">
+                        <tr>
+                            <th>Cedula del Doctor</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Telefono</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="mt-1">
+
+                        @foreach (var Doctor in ListaDeDoctores)
+                        {
+                            <tr class="bgc-h-yellow-l4 d-style">
+                                <td class="d-none d-sm-table-cell text-grey-d1">@Doctor.CedulaDoctor</td>
+                                <td class="text-600 text-dark">@Doctor.NombreDoctor</td>
+                                <td class="text-600 text-orange-d2">@Doctor.Apellidos</td>
+                                <td class="d-none d-sm-table-cell text-grey-d1">@Doctor.Telefono</td>
+                                <td>
+                                    <div class="d-none d-lg-flex">
+                                        @*<a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-success btn-a-lighter-success">
+                                                <i class="fa fa-pencil-alt"></i>
+                                            </a>*@
+
+                                        <button type="button" class="btn btn-primary" @onclick="() => MostrarModalDeActualizar(Doctor.CedulaDoctor)">Editar</button>
+
+                                        <a href="#" class="mx-2px btn radius-1 border-2 btn-xs btn-brc-tp btn-light-secondary btn-h-lighter-danger btn-a-lighter-danger">
+                                            <i class="fa fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="ModalAgregarDoctor" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary-d3" id="exampleModalLabel">
+                    @(AccionDeEdicion + " " + "Doctor")
+                </h5>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <EditForm Model="@DoctorDtoModel" OnValidSubmit="@GuardarDoctor">
+
+                <DataAnnotationsValidator />
+
+                <div class="modal-body">
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="CedulaDoctor" class="mb-0">Cedula de Doctor</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="CedulaDoctor" @bind-Value="@DoctorDtoModel.CedulaDoctor" disabled="@(AccionDeEdicion == "Actualizar" ? true : false)"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese la cedula del Doctor" />
+                            <ValidationMessage For="() => DoctorDtoModel.CedulaDoctor" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="NombreDoctor" class="mb-0">Nombre del Doctor</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="NombreDoctor" @bind-Value="@DoctorDtoModel.NombreDoctor"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese el nombre del Doctor" />
+                            <ValidationMessage For="() => DoctorDtoModel.NombreDoctor" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="Apellidos" class="mb-0">Apellidos del Doctor</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="Apellidos" @bind-Value="@DoctorDtoModel.Apellidos"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese Apellidos del Doctor" />
+                            <ValidationMessage For="() => DoctorDtoModel.Apellidos" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-sm-4 col-form-label text-sm-right pr-0">
+                            <label for="Telefono" class="mb-0">Telefono del Doctor</label>
+                        </div>
+
+                        <div class="col-sm-8">
+                            <InputText id="Telefono" @bind-Value="@DoctorDtoModel.Telefono"
+                                       class="form-control col-sm-12 col-md-12" placeholder="Ingrese Telefono del Doctor" />
+                            <ValidationMessage For="() => DoctorDtoModel.Telefono" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private DoctoresDto[] ListaDeDoctores;
+
+    private DoctoresDto DoctorDtoModel = new();
+
+    private string AccionDeEdicion = "";
+
+    private string CedulaDoctorPorActualizar;
+
+    private string CedulaDoctorPorEliminar;
+
+    private string UtlHost = "https://localhost:44332/api";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ObtenerDoctores();
+    }
+
+
+
+    private async Task MostrarModalDeAgregar()
+    {
+
+        AccionDeEdicion = "Agregar";
+
+        DoctorDtoModel = new();
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalAgregarDoctor");
+
+    }
+
+    private async Task MostrarModalDeActualizar(string CedulaDoctor)
+    {
+
+        AccionDeEdicion = "Actualizar";
+
+        await ObtenerDoctorPorId(CedulaDoctor);
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalAgregarDoctor");
+
+    }
+
+    private async Task GuardarDoctor()
+    {
+        if (AccionDeEdicion == "Agregar")
+        {
+            await AgregarDoctor();
+        }
+        else
+        {
+            await ActualizarDoctor();
+        }
+    }
+
+    private async Task MostrarModalDeEliminar(string CedulaDoctor)
+    {
+
+        await ObtenerDoctorPorId(CedulaDoctor);
+
+        CedulaDoctorPorEliminar = CedulaDoctor;
+
+        await JSRuntime.InvokeAsync<object>("global.openModal", "ModalConfirmacionDeEliminacionDeAula");
+    }
+
+    private async Task ConfirmarEliminacionDeAula()
+    {
+
+        await EliminarDoctor();
+
+    }
+
+    #region Acciones del modelo que van al API
+
+    private async Task ObtenerDoctores()
+    {
+        ListaDeDoctores = await Http.GetFromJsonAsync<DoctoresDto[]>($"{UtlHost}/Doctores");
+    }
+
+    private async Task ObtenerDoctorPorId(string CedulaDoctor)
+    {
+        DoctorDtoModel = await Http.GetFromJsonAsync<DoctoresDto>($"{UtlHost}/Doctores/{CedulaDoctor}");
+
+        CedulaDoctorPorActualizar = DoctorDtoModel.CedulaDoctor;
+
+    }
+
+    private async Task AgregarDoctor()
+    {
+        var Doctor = DoctorDtoModel;
+
+        using var response = await Http.PostAsJsonAsync($"{UtlHost}/Doctores", Doctor);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeAula");
+
+            await ObtenerDoctores();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Doctor agregada correctamente");
+
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo agregar el Doctor ");
+
+        }
+    }
+
+    private async Task ActualizarDoctor()
+    {
+        var Doctor = DoctorDtoModel;
+
+        using var response = await Http.PutAsJsonAsync($"{UtlHost}/Doctores/{CedulaDoctorPorActualizar}", Doctor);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalEdicionDeAula");
+
+            await ObtenerDoctores();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Doctor actualizada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "No se pudo actualizar el Doctor ");
+
+        }
+    }
+
+    private async Task EliminarDoctor()
+    {
+        using var response = await Http.DeleteAsync($"{UtlHost}/Doctores/{CedulaDoctorPorEliminar}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeAsync<object>("global.closeModal", "ModalConfirmacionDeEliminacionDeDoctor");
+
+            await ObtenerDoctores();
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaExito", "Doctor eliminada correctamente");
+        }
+        else
+        {
+            string errorMessage = response.ReasonPhrase;
+            Console.WriteLine($"Error: {errorMessage}");
+
+            await JSRuntime.InvokeAsync<object>("global.mostrarAlertaError", "Error al eliminar el doctor");
+
+        }
+    }
+
+    #endregion
+}
